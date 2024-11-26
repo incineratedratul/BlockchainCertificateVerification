@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Certificates</title>
+    <link rel="stylesheet" href="/css/dashboardstyle.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>View Certificates</h1>
+
+      <% if (notifications && notifications.length > 0) { %>
+      <ul>
+        <% notifications.forEach(notification => { %> <% if
+        (notification.company_user_id === user.username) { %>
+        <li>
+          <p><strong>Status:</strong> <%= notification.status %></p>
+          <p><strong>Message:</strong> <%= notification.message %></p>
+
+          <% if (notification.message.includes('approved')) { %> <% if
+          (notification.fileExists) { %>
+          <a
+            href="/company/download/<%= notification.certificate_id %>"
+            download
+            >Download Certificate</a
+          >
+          <% } else { %>
+          <p>Certificate file not found.</p>
+          <% } %> <% } else if (notification.message.includes('reject')) { %>
+          <p>
+            Your request was denied by user ID: <%=
+            notification.applicant_user_id %>
+          </p>
+          <% } %>
+        </li>
+        <% } %> <% }) %>
+      </ul>
+      <% } else { %>
+      <p>No notifications available.</p>
+      <% } %>
+    </div>
+  </body>
+</html>

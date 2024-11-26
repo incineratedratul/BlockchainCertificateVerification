@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notification</title>
+    <link rel="stylesheet" href="/css/not.css" />
+  </head>
+  <body>
+    <div class="notification-container">
+      <div class="notification">
+        <h2>📢 Notification</h2>
+        <% if (locals.filename) { %>
+        <p class="message success">
+          ✅ Applicant1 has approved their certificate. Click the button below
+          to proceed.
+        </p>
+        <form action="/downloads/<%= filename %>" method="GET">
+          <button type="submit" class="download-button">
+            Download Certificate
+          </button>
+        </form>
+        <% } else { %>
+        <p class="message warning">
+          ⚠️ No certificates are available for download at this moment.
+        </p>
+        <% } %>
+      </div>
+    </div>
+  </body>
+</html>

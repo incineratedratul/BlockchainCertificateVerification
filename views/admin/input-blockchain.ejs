@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Blockchain - Verifi-chain</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>Input Blockchain</h1>
+                <p>Form to input data into the blockchain will be displayed here.</p>
+                <a href="/admin/dashboard" class="hero-button">Back to Dashboard</a>
+            </div>
+        </header>
+
+        <main>
+            <h2>Add Certificate</h2>
+            <form id="addCertificateForm" class="form">
+                <label for="username">Username:</label><br>
+                <input type="text" id="username" name="username"><br>
+
+                <label for="fullName">Full Name:</label><br>
+                <input type="text" id="fullName" name="fullName"><br>
+
+                <label for="verifier">Verifier:</label><br>
+                <input type="text" id="verifier" name="verifier"><br>
+
+                <label for="verificationTime">Verification Time (timestamp):</label><br>
+                <input type="number" id="verificationTime" name="verificationTime"><br>
+
+                <label for="certificateName">Certificate Name:</label><br>
+                <input type="text" id="certificateName" name="certificateName"><br>
+
+                <label for="certificateType">Certificate Type:</label><br>
+                <input type="text" id="certificateType" name="certificateType"><br>
+
+                <label for="instituteName">Institute Name:</label><br>
+                <input type="text" id="instituteName" name="instituteName"><br>
+
+                <label for="verifierContact">Verifier Contact:</label><br>
+                <input type="text" id="verifierContact" name="verifierContact"><br>
+
+                <label for="contentIdentifier">Content Identifier:</label><br>
+                <input type="text" id="contentIdentifier" name="contentIdentifier"><br>
+
+                <input type="submit" value="Add Certificate" class="hero-button">
+            </form>
+
+            <h2>Get Certificates by Username</h2>
+            <form id="getCertificatesForm" class="form">
+                <label for="searchUsername">Username:</label><br>
+                <input type="text" id="searchUsername" name="searchUsername"><br>
+                <input type="submit" value="Get Certificates" class="hero-button">
+            </form>
+
+            <h3>Certificates:</h3>
+            <ul id="certificatesList"></ul>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Verifi-chain. All rights reserved.</p>
+    </footer>
+
+    <script nonce="<%= nonce %>">
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                } catch (error) {
+                    console.error("User denied account access");
+                }
+            } else if (window.web3) {
+                window.web3 = new Web3(window.web3.currentProvider);
+            } else {
+                console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+            }
+
+            // Initialize contract
+            const contractABI = [
+                {
+                    "inputs": [
+                        { "internalType": "string", "name": "_username", "type": "string" },
+                        { "internalType": "string", "name": "_fullName", "type": "string" },
+                        { "internalType": "string", "name": "_verifier", "type": "string" },
+                        { "internalType": "uint256", "name": "_verificationTime", "type": "uint256" },
+                        { "internalType": "string", "name": "_certificateName", "type": "string" },
+                        { "internalType": "string", "name": "_certificateType", "type": "string" },
+                        { "internalType": "string", "name": "_instituteName", "type": "string" },
+                        { "internalType": "string", "name": "_verifierContact", "type": "string" },
+                        { "internalType": "string", "name": "_contentIdentifier", "type": "string" }
+                    ],
+                    "name": "addCertificate",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "anonymous": false,
+                    "inputs": [
+                        { "indexed": false, "internalType": "string", "name": "contentIdentifier", "type": "string" },
+                        { "indexed": false, "internalType": "string", "name": "username", "type": "string" }
+                    ],
+                    "name": "CertificateAdded",
+                    "type": "event"
+                },
+                {
+                    "inputs": [
+                        { "internalType": "string", "name": "_contentIdentifier", "type": "string" }
+                    ],
+                    "name": "getCertificateByContentIdentifier",
+                    "outputs": [
+                        { "internalType": "string", "name": "username", "type": "string" },
+                        { "internalType": "string", "name": "fullName", "type": "string" },
+                        { "internalType": "string", "name": "verifier", "type": "string" },
+                        { "internalType": "uint256", "name": "verificationTime", "type": "uint256" },
+                        { "internalType": "string", "name": "certificateName", "type": "string" },
+                        { "internalType": "string", "name": "certificateType", "type": "string" },
+                        { "internalType": "string", "name": "instituteName", "type": "string" },
+                        { "internalType": "string", "name": "verifierContact", "type": "string" }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        { "internalType": "string", "name": "_username", "type": "string" }
+                    ],
+                    "name": "getCertificatesByUsername",
+                    "outputs": [
+                        {
+                            "components": [
+                                { "internalType": "string", "name": "contentIdentifier", "type": "string" },
+                                { "internalType": "string", "name": "certificateName", "type": "string" }
+                            ],
+                            "internalType": "struct CertificateVerification.CertificateSummary[]",
+                            "name": "",
+                            "type": "tuple[]"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                }
+            ];
+
+            const contractAddress = '0xC4Fa8F6B75771005B6aF6b24ECF59BdF3f831777'; // Replace with your deployed contract address
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            // Add certificate
+            document.getElementById('addCertificateForm').onsubmit = async (event) => {
+                event.preventDefault();
+
+                const username = document.getElementById('username').value;
+                const fullName = document.getElementById('fullName').value;
+                const verifier = document.getElementById('verifier').value;
+                const verificationTime = document.getElementById('verificationTime').value;
+                const certificateName = document.getElementById('certificateName').value;
+                const certificateType = document.getElementById('certificateType').value;
+                const instituteName = document.getElementById('instituteName').value;
+                const verifierContact = document.getElementById('verifierContact').value;
+                const contentIdentifier = document.getElementById('contentIdentifier').value;
+
+                const accounts = await web3.eth.requestAccounts();
+                await contract.methods.addCertificate(
+                    username, fullName, verifier, verificationTime, certificateName, certificateType, instituteName, verifierContact, contentIdentifier
+                ).send({ from: accounts[0] });
+
+                alert('Certificate added successfully!');
+            };
+
+            // Get certificates by username
+            document.getElementById('getCertificatesForm').onsubmit = async (event) => {
+                event.preventDefault();
+
+                const username = document.getElementById('searchUsername').value;
+                const certificates = await contract.methods.getCertificatesByUsername(username).call();
+
+                const certificatesList = document.getElementById('certificatesList');
+                certificatesList.innerHTML = '';
+
+                certificates.forEach(cert => {
+                    const li = document.createElement('li');
+                    li.textContent = `Name: ${cert.certificateName}, ID: ${cert.contentIdentifier}`;
+                    certificatesList.appendChild(li);
+                });
+            };
+        });
+    </script>
+</body>
+</html>

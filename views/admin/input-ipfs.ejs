@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Encryption and Upload to IPFS</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" nonce="<%= nonce %>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" nonce="<%= nonce %>">
+    <script src="https://unpkg.com/ipfs-http-client/dist/index.min.js" nonce="<%= nonce %>"></script>
+    <style nonce="<%= nonce %>">
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        label {
+            font-weight: 400;
+        }
+        button {
+            font-weight: 600;
+            padding: 10px;
+            cursor: pointer;
+        }
+        #downloadLink {
+            display: none;
+            margin-top: 20px;
+        }
+        #copyButton {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Encrypt File and Upload to IPFS</h1>
+    <form id="encryptionForm">
+        <label for="encryptionKey">Encryption Key:</label>
+        <input type="password" id="encryptionKey" required>
+        <label for="fileInput">Select File:</label>
+        <input type="file" id="fileInput" required>
+        <button type="submit">Encrypt and Upload</button>
+    </form> 
+
+    <a id="downloadLink">Download Encrypted File</a>
+    <p id="contentIdentifier"></p>
+    <button id="copyButton">Copy</button>
+
+    <script nonce="<%= nonce %>">
+        async function deriveKey(password, salt) {
+            const encoder = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                encoder.encode(password),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                true,
+                ['encrypt', 'decrypt']
+            );
+        }
+
+        async function generateHMACKey() {
+            return crypto.subtle.generateKey(
+                {
+                    name: 'HMAC',
+                    hash: 'SHA-256'
+                },
+                true,
+                ['sign', 'verify']
+            );
+        }
+
+        async function signData(hmacKey, data) {
+            return crypto.subtle.sign('HMAC', hmacKey, data);
+        }
+
+        async function encryptFile(file, password) {
+            const iv = crypto.getRandomValues(new Uint8Array(12)); // Initialization vector
+            const salt = crypto.getRandomValues(new Uint8Array(16)); // Salt for key derivation
+            const key = await deriveKey(password, salt);
+            const hmacKey = await generateHMACKey();
+
+            const arrayBuffer = await file.arrayBuffer();
+            const encryptedContent = await crypto.subtle.encrypt(
+                {
+                    name: 'AES-GCM',
+                    iv: iv
+                },
+                key,
+                arrayBuffer
+            );
+
+            const hmac = await signData(hmacKey, encryptedContent);
+
+            // Combine all parts into a single Uint8Array
+            const combinedArray = new Uint8Array(salt.byteLength + iv.byteLength + encryptedContent.byteLength + hmac.byteLength);
+            combinedArray.set(salt, 0);
+            combinedArray.set(iv, salt.byteLength);
+            combinedArray.set(new Uint8Array(encryptedContent), salt.byteLength + iv.byteLength);
+            combinedArray.set(new Uint8Array(hmac), salt.byteLength + iv.byteLength + encryptedContent.byteLength);
+
+            // Create Blob from combined data with original file type
+            return new Blob([combinedArray], { type: file.type });
+        }
+
+        async function uploadToIPFS(file) {
+            try {
+                const ipfs = window.IpfsHttpClient.create({ host: 'localhost', port: '5001', protocol: 'http' });
+                const result = await ipfs.add(file);
+                return result.cid.toString();
+            } catch (error) {
+                console.error('Error uploading to IPFS:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('encryptionForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('fileInput');
+            const password = document.getElementById('encryptionKey').value;
+            const file = fileInput.files[0];
+
+            try {
+                // Encrypt the file
+                const encryptedBlob = await encryptFile(file, password);
+                const timestamp = file.lastModified;
+                const encryptedFile = new File([encryptedBlob], `encrypted_${file.name}`, { type: file.type, lastModified: timestamp });
+
+                // Download link for the encrypted file
+                const downloadLink = document.getElementById('downloadLink');
+                const url = URL.createObjectURL(encryptedBlob);
+                downloadLink.href = url;
+                downloadLink.download = `encrypted_${file.name}`;
+                downloadLink.style.display = 'block'; // Apply display style dynamically
+                downloadLink.textContent = 'Download Encrypted File';
+
+                // Upload to IPFS
+                const contentIdentifier = await uploadToIPFS(encryptedFile);
+                const contentIdentifierElement = document.getElementById('contentIdentifier');
+                contentIdentifierElement.textContent = `Content Identifier: ${contentIdentifier}`;
+
+                // Copy button for content identifier
+                const copyButton = document.getElementById('copyButton');
+                copyButton.style.display = 'inline-block'; // Apply display style dynamically
+                copyButton.onclick = () => {
+                    navigator.clipboard.writeText(contentIdentifier)
+                        .then(() => {
+                            console.log('Content identifier copied to clipboard');
+                        })
+                        .catch((error) => {
+                            console.error('Failed to copy content identifier:', error);
+                        });
+                };
+            } catch (error) {
+                console.error('Error during encryption or upload:', error);
+            }
+        });
+    </script>
+</body>
+</html>

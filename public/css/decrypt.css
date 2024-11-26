@@ -1,0 +1,29 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+    margin: 20px;
+}
+h1 {
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+label {
+    font-weight: 400;
+}
+button {
+    font-weight: 600;
+    padding: 10px;
+    cursor: pointer;
+}
+#downloadLink {
+    display: none;
+    margin-top: 20px;
+}
+#copyButton {
+    display: none;
+    margin-top: 10px;
+}

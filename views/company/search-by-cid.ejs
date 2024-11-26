@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search by IPFS CID</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script src="/js/fetchcidcertificate.js" defer></script>
+    <script src="/js/sendNotification.js" defer></script>
+  </head>
+  <body>
+    <h1>Search Certificates by IPFS CID</h1>
+    <form id="searchForm">
+      <label for="ipfsCID">IPFS CID:</label>
+      <input type="text" id="ipfsCID" name="ipfsCID" required />
+      <input
+        type="hidden"
+        id="username"
+        name="username"
+        value="defaultUsername"
+      />
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="result"></div>
+  </body>
+</html>

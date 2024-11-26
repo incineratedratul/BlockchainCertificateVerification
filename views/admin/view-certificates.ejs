@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Certificates - Verifi-chain</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include('../partials/header') %>
+    <main class="container">
+      <section>
+        <h2>View Certificates</h2>
+        <% if (typeof error !== 'undefined') { %>
+        <div class="error"><%= error %></div>
+        <% } %>
+        <table>
+          <thead>
+            <tr>
+              <th>Certificate ID</th>
+              <th>Full Name</th>
+              <th>Certificate Name</th>
+              <th>Institute</th>
+              <th>Certificate Type</th>
+              <th>Filename</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% certificates.forEach(certificate => { %>
+            <tr>
+              <td><%= certificate['Certificate ID'] %></td>
+              <td><%= certificate['Full Name'] %></td>
+              <td><%= certificate['Certificate Name'] %></td>
+              <td><%= certificate.Institute %></td>
+              <td><%= certificate['Certificate Type'] %></td>
+              <td>
+                <a href="/uploads/<%= certificate.Filename %>" download
+                  ><%= certificate.Filename %></a
+                >
+              </td>
+              <td><%= certificate.status %></td>
+              <td>
+                <form action="/admin/send-request" method="post">
+                  <input
+                    type="hidden"
+                    name="certificateID"
+                    value="<%= certificate['Certificate ID'] %>"
+                  />
+                  <input
+                    type="hidden"
+                    name="institute"
+                    value="<%= certificate.Institute %>"
+                  />
+                  <button type="submit" class="btn">Send Request</button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <%- include('../partials/footer') %>
+  </body>
+</html>

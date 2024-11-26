@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="container">
+    <h1>Notifications</h1>
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } else { %>
+      <ul>
+        <% notifications.forEach(notification => { %>
+          <li><%= notification.message %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </main>
+  <%- include('../partials/footer') %>
+</body>
+</html>

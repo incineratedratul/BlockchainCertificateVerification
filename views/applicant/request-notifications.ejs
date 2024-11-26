@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" href="/css/request-notification.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .notification {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+      }
+      .notification h3 {
+        margin: 0;
+        font-size: 1.2em;
+      }
+      .notification p {
+        margin: 5px 0;
+      }
+      .notification button {
+        margin: 5px 5px 0 0;
+        padding: 5px 10px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+      .approve {
+        background-color: #4caf50;
+        color: white;
+      }
+      .reject {
+        background-color: #f44336;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Notifications</h1>
+
+    <% if (notifications.length > 0) { %> <%
+    notifications.forEach(function(notification) { %>
+    <div class="notification">
+      <h3>
+        <%= notification.requested_company %> has requested "<%=
+        notification.certificate_name %>"
+      </h3>
+      <p><strong>Filename:</strong> <%= notification.filename %></p>
+      <form
+        method="POST"
+        action="/applicant/approve-notification"
+        style="display: inline"
+      >
+        <input type="hidden" name="id" value="<%= notification.id %>" />
+        <button type="submit" class="approve">Approve</button>
+      </form>
+      <form
+        method="POST"
+        action="/applicant/reject-notification"
+        style="display: inline"
+      >
+        <input type="hidden" name="id" value="<%= notification.id %>" />
+        <button type="submit" class="reject">Reject</button>
+      </form>
+    </div>
+    <% }) %> <% } else { %>
+    <p>No notifications available.</p>
+    <% } %>
+  </body>
+</html>

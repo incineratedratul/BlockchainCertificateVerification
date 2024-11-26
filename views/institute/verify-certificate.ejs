@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/css/verifyCertificate.css" />
+    <title>Verify Certificate</title>
+    <script src="https://unpkg.com/ipfs-http-client/dist/index.min.js"></script>
+    <style nonce="<%= nonce %>">
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      label {
+        font-weight: 400;
+      }
+      button {
+        font-weight: 600;
+        padding: 10px;
+        cursor: pointer;
+      }
+      #downloadLink {
+        display: none;
+        margin-top: 20px;
+      }
+      #copyButton {
+        display: none;
+        margin-top: 10px;
+      }
+      #uploadTime {
+        margin-top: 10px;
+        font-weight: bold;
+      }
+      #encryptionKey {
+        font-weight: bold;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Verify Certificate</h1>
+    <form id="encryptionForm" enctype="multipart/form-data">
+      <label for="username">Username:</label>
+      <input type="text" id="username" name="username" required />
+
+      <label for="fullName">Full Name:</label>
+      <input type="text" id="fullName" name="fullName" required />
+
+      <label for="certificateName">Certificate Name:</label>
+      <input type="text" id="certificateName" name="certificateName" required />
+
+      <label for="institute">Institute:</label>
+      <input type="text" id="institute" name="institute" required />
+
+      <label for="certificateType">Certificate Type:</label>
+      <input type="text" id="certificateType" name="certificateType" required />
+
+      <label for="verifier">Verifier:</label>
+      <input type="text" id="verifier" name="verifier" required />
+
+      <label for="verifierContact">Verifier Contact:</label>
+      <input type="text" id="verifierContact" name="verifierContact" required />
+
+      <label for="timeVerified">Time Verified:</label>
+      <input
+        type="datetime-local"
+        id="timeVerified"
+        name="timeVerified"
+        required
+      />
+
+      <label for="fileInput">Select File:</label>
+      <input type="file" id="fileInput" name="certificate" required />
+
+      <button type="submit">Verify and Upload</button>
+    </form>
+
+    <a id="downloadLink">Download Encrypted File</a>
+    <p id="contentIdentifier"></p>
+    <p id="encryptionKey"></p>
+    <button id="copyButton">Copy IPFS CID</button>
+    <p id="uploadTime"></p>
+
+    <script nonce="<%= nonce %>">
+      document
+        .getElementById("encryptionForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const fileInput = document.getElementById("fileInput");
+          const file = fileInput.files[0];
+          const timestamp = Date.now();
+          const key = generateKeyFromTimestamp(timestamp);
+          const certificateID = generateCertificateID();
+
+          try {
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file);
+            reader.onload = async function () {
+              let byteArray = new Uint8Array(reader.result);
+
+              byteArray = xorData(byteArray, key);
+
+              const metadata = JSON.stringify({
+                type: file.type,
+                size: file.size,
+              });
+              const metadataBytes = new TextEncoder().encode(metadata);
+              const metadataLength = new Uint8Array([metadataBytes.length]);
+              byteArray = new Uint8Array([
+                ...metadataLength,
+                ...metadataBytes,
+                ...byteArray,
+              ]);
+
+              const encryptedBlob = new Blob([byteArray], {
+                type: "application/octet-stream",
+              });
+              const encryptedFile = new File(
+                [encryptedBlob],
+                `encrypted_${file.name}`,
+                { type: "application/octet-stream" }
+              );
+
+              const ipfs = window.IpfsHttpClient.create({
+                host: "localhost",
+                port: "5001",
+                protocol: "http",
+              });
+              const startTime = performance.now();
+              const addedFile = await ipfs.add(encryptedFile);
+              const endTime = performance.now();
+              const uploadTime = (endTime - startTime) / 1000;
+
+              const ipfsCID = addedFile.cid.toString();
+              const encodedKey = btoa(String.fromCharCode(...key));
+
+              document.getElementById(
+                "contentIdentifier"
+              ).textContent = `IPFS CID: ${ipfsCID}`;
+              document.getElementById(
+                "encryptionKey"
+              ).textContent = `Encryption Key: ${encodedKey}`;
+              document.getElementById(
+                "uploadTime"
+              ).textContent = `IPFS Upload Time: ${uploadTime.toFixed(
+                2
+              )} seconds`;
+
+              const copyButton = document.getElementById("copyButton");
+              copyButton.style.display = "inline-block";
+              copyButton.onclick = () => {
+                navigator.clipboard
+                  .writeText(ipfsCID)
+                  .then(() =>
+                    console.log("Content identifier copied to clipboard")
+                  )
+                  .catch((error) =>
+                    console.error("Failed to copy content identifier:", error)
+                  );
+              };
+
+              const formData = new FormData(event.target);
+              formData.append("certificateID", certificateID);
+              formData.append("ipfsCID", ipfsCID);
+              formData.append("encryptionKey", encodedKey);
+
+              // Debugging: Log FormData content
+              for (let pair of formData.entries()) {
+                console.log(`${pair[0]}: ${pair[1]}`);
+              }
+
+              const response = await fetch(
+                "/institute/upload-verified-certificate",
+                {
+                  method: "POST",
+                  body: formData,
+                }
+              );
+
+              const result = await response.json();
+              if (response.ok) {
+                alert(result.message);
+
+                const downloadUrl = URL.createObjectURL(encryptedBlob);
+                const downloadLink = document.getElementById("downloadLink");
+                downloadLink.href = downloadUrl;
+                downloadLink.textContent = "Download Encrypted File";
+                downloadLink.download = `encrypted_${file.name}`;
+                downloadLink.style.display = "inline-block";
+              } else {
+                alert(result.error);
+              }
+            };
+          } catch (error) {
+            console.error("Error during encryption or upload:", error);
+            alert("An error occurred during the verification process.");
+          }
+        });
+
+      function xorData(data, key) {
+        for (let i = 0; i < data.length; i++) {
+          data[i] ^= key[i % key.length];
+        }
+        return data;
+      }
+
+      function generateKeyFromTimestamp(timestamp) {
+        const key = new Uint8Array(16);
+        for (let i = 0; i < key.length; i++) {
+          key[i] = (timestamp >> (i * 4)) & 0xff;
+        }
+        return key;
+      }
+
+      function generateCertificateID() {
+        return "CERT-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+      }
+    </script>
+  </body>
+</html>

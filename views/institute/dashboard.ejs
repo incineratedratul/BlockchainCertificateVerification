@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Institute Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+  </head>
+  <body>
+    <%- include('../partials/header') %>
+    <main class="container">
+      <h1>Welcome to the Institute Dashboard</h1>
+      <p>Hello, <%= user.instituteName %>!</p>
+      <a href="/institute/view-requests" role="button">View Requests</a>
+      <a href="/institute/history" role="button">History</a>
+      <a href="/institute/notifications" role="button">Notifications</a>
+      <a href="/institute/upload-verified-certificate" role="button"
+        >Upload Verified Certificate</a
+      >
+    </main>
+    <%- include('../partials/footer') %>
+  </body>
+</html>

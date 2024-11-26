@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search and Match Certificates</title>
+    <link rel="stylesheet" href="/css/search.css" />
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+  </head>
+  <body>
+    <h1>Search and Match Certificates</h1>
+    <form id="searchForm">
+      <label for="cid">Content Identifier (CID):</label>
+      <input type="text" id="cid" name="cid" required />
+      <button type="submit">Search</button>
+    </form>
+
+    <div id="result"></div>
+
+    <button id="matchAndStoreButton" style="display: none">
+      Match and Store Certificates
+    </button>
+
+    <script nonce="<%= nonce %>">
+      // MetaMask and web3 setup
+      async function initialize() {
+        if (window.ethereum) {
+          window.web3 = new Web3(window.ethereum);
+          try {
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+          } catch (error) {
+            console.error("User denied account access");
+          }
+        } else if (window.web3) {
+          window.web3 = new Web3(window.web3.currentProvider);
+        } else {
+          console.log(
+            "Non-Ethereum browser detected. You should consider trying MetaMask!"
+          );
+        }
+      }
+
+      initialize();
+
+      const contractABI = [
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_username",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_issueDate",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_certificateName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_fullName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_institute",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_certificateType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_certificateID",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_filename",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_verifier",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_verifierContact",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_ipfsCID",
+              type: "string",
+            },
+          ],
+          name: "addCertificate",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+          ],
+          name: "cidToCertificate",
+          outputs: [
+            {
+              internalType: "string",
+              name: "username",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "issueDate",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "fullName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "institute",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateID",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "filename",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifier",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifierContact",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "ipfsCID",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_ipfsCID",
+              type: "string",
+            },
+          ],
+          name: "getCertificateByCID",
+          outputs: [
+            {
+              internalType: "string",
+              name: "username",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "issueDate",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "fullName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "institute",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateID",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "filename",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifier",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifierContact",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "ipfsCID",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "_username",
+              type: "string",
+            },
+          ],
+          name: "getCertificatesByUsername",
+          outputs: [
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "username",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "issueDate",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "certificateName",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "fullName",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "institute",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "certificateType",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "certificateID",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "filename",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "verifier",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "verifierContact",
+                  type: "string",
+                },
+                {
+                  internalType: "string",
+                  name: "ipfsCID",
+                  type: "string",
+                },
+              ],
+              internalType: "struct CertificateManager.Certificate[]",
+              name: "",
+              type: "tuple[]",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "string",
+              name: "",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "",
+              type: "uint256",
+            },
+          ],
+          name: "usernameToCertificates",
+          outputs: [
+            {
+              internalType: "string",
+              name: "username",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "issueDate",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "fullName",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "institute",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateType",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "certificateID",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "filename",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifier",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "verifierContact",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "ipfsCID",
+              type: "string",
+            },
+          ],
+          stateMutability: "view",
+          type: "function",
+        },
+      ];
+      const contractAddress = "0x81025A91D759d19507158fa1bAa4a9552d413584";
+      const certificateManager = new web3.eth.Contract(
+        contractABI,
+        contractAddress
+      );
+
+      let lastFetchedCertificate = null; // To store the last fetched certificate
+
+      document
+        .getElementById("searchForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const cid = document.getElementById("cid").value;
+          console.log("Searching for CID:", cid); // Debugging line
+          const accounts = await web3.eth.getAccounts();
+          const userAddress = accounts[0];
+
+          try {
+            const certificate = await certificateManager.methods
+              .getCertificateByCID(cid)
+              .call({ from: userAddress, gas: 500000 });
+
+            console.log("Certificate data:", certificate);
+            displayResult(certificate);
+
+            // Save the certificate globally for the Match and Store button
+            lastFetchedCertificate = certificate;
+            document.getElementById("matchAndStoreButton").style.display =
+              "inline-block"; // Show the button
+          } catch (error) {
+            console.error("Error fetching certificate: ", error);
+            document.getElementById("result").innerText =
+              "Error fetching certificate. Please check the CID and try again.";
+          }
+        });
+
+      document
+        .getElementById("matchAndStoreButton")
+        .addEventListener("click", async () => {
+          if (!lastFetchedCertificate) {
+            alert(
+              "No certificate data to match and store. Please search first."
+            );
+            return;
+          }
+
+          // Extract the required fields: Full Name, Filename
+          const fullName = lastFetchedCertificate.fullName;
+          const filename = lastFetchedCertificate.filename;
+
+          if (!fullName || !filename) {
+            alert(
+              "Full Name or Filename is missing from the certificate data."
+            );
+            return;
+          }
+
+          // Send Full Name, Filename, and Company User ID to the backend for matching
+          const response = await fetch("/company/match-and-store", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              fullName,
+              filename,
+              companyUserID: sessionStorage.getItem("username"), // Using sessionStorage if needed
+            }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            alert(
+              `Matching and storing successful! ${data.storedCount} certificates saved.`
+            );
+          } else {
+            const error = await response.text();
+            console.error("Error storing certificates:", error);
+            alert("Error storing certificates. Please check the console.");
+          }
+        });
+
+      function displayResult(certificate) {
+        const resultDiv = document.getElementById("result");
+        resultDiv.innerHTML = `
+        <h2>Certificate Details</h2>
+        <p><strong>Full Name:</strong> ${certificate.fullName}</p>
+        <p><strong>Certificate Name:</strong> ${certificate.certificateName}</p>
+        <p><strong>Certificate Type:</strong> ${certificate.certificateType}</p>
+        <p><strong>Filename:</strong> ${certificate.filename}</p>
+        <p><strong>IPFS CID:</strong> ${certificate.ipfsCID}</p>
+         <p><strong>Username:</strong> ${certificate.username}</p>
+          <p><strong>Verifier:</strong> ${certificate.verifier}</p>
+        
+            
+
+      `;
+      }
+    </script>
+  </body>
+</html>

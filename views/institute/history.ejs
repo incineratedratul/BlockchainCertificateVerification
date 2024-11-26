@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verification History</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="container">
+    <h1>Verification History</h1>
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Certificate ID</th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Certificate Name</th>
+            <th>Institute</th>
+            <th>Certificate Type</th>
+            <th>Filename</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% history.forEach(item => { %>
+            <tr>
+              <td><%= item['Certificate_ID'] %></td>
+              <td><%= item.Username %></td>
+              <td><%= item.Full_Name %></td>
+              <td><%= item.Certificate_Name %></td>
+              <td><%= item.Institute %></td>
+              <td><%= item.Certificate_Type %></td>
+              <td><%= item.Filename %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </main>
+  <%- include('../partials/footer') %>
+</body>
+</html>

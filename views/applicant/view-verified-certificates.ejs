@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Verified Certificates</title>
+    <link rel="stylesheet" href="/css/view-verified-certificate.css" />
+    <script src="https://unpkg.com/ipfs-http-client@50.1.2/dist/index.min.js"></script>
+    <style>
+      #dropArea {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        text-align: center;
+        margin-top: 20px;
+      }
+      #dropArea.hover {
+        border-color: #333;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid #eee;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Verified Certificates</h1>
+
+    <!-- Certificate List Section -->
+    <div class="section">
+      <% if (certificates && certificates.length === 0) { %>
+      <p>No verified certificates available.</p>
+      <% } else { %>
+      <ul>
+        <% certificates.forEach((certificate) => { %>
+        <li>
+          <p><strong>Username:</strong> <%= certificate.username %></p>
+          <p><strong>Full Name:</strong> <%= certificate.full_name %></p>
+          <p>
+            <strong>Certificate Name:</strong> <%= certificate.certificate_name
+            %>
+          </p>
+          <p><strong>Institute:</strong> <%= certificate.institute %></p>
+          <p>
+            <strong>Certificate Type:</strong> <%= certificate.certificate_type
+            %>
+          </p>
+          <p>
+            <strong>Certificate ID:</strong> <%= certificate.certificate_id %>
+          </p>
+          <p><strong>Verifier:</strong> <%= certificate.verifier %></p>
+          <p>
+            <strong>Verifier Contact:</strong> <%= certificate.verifier_contact
+            %>
+          </p>
+          <p><strong>IPFS CID:</strong> <%= certificate.ipfs_cid %></p>
+          <p>
+            <strong>Time Verified:</strong> <%= certificate.time_verified %>
+          </p>
+          <p><strong>Filename:</strong> <%= certificate.filename %></p>
+          <button
+            class="download-btn"
+            data-ipfs-cid="<%= certificate.ipfs_cid %>"
+            data-encryption-key="<%= certificate.encryption_key %>"
+            data-certificate-id="<%= certificate.certificate_id %>"
+          >
+            Download Certificate
+          </button>
+        </li>
+        <% }); %>
+      </ul>
+      <% } %>
+    </div>
+
+    <script nonce="<%= nonce %>">
+      const ipfs = window.IpfsHttpClient.create({
+        host: "localhost",
+        port: "5001",
+        protocol: "http",
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        setupEventListeners();
+      });
+
+      function setupEventListeners() {
+        // Download buttons for verified certificates
+        document.querySelectorAll(".download-btn").forEach((button) => {
+          button.addEventListener("click", async (event) => {
+            const ipfsCID = event.target.getAttribute("data-ipfs-cid");
+            const encryptionKey = event.target.getAttribute(
+              "data-encryption-key"
+            );
+            const certificateID = event.target.getAttribute(
+              "data-certificate-id"
+            );
+            await fetchAndDecryptCertificate(
+              ipfsCID,
+              encryptionKey,
+              certificateID
+            );
+          });
+        });
+      }
+
+      async function fetchFileFromIPFS(cid) {
+        try {
+          const chunks = [];
+          for await (const chunk of ipfs.cat(cid)) {
+            chunks.push(chunk);
+          }
+
+          if (chunks.length === 0) {
+            throw new Error("No data fetched from IPFS.");
+          }
+
+          const fileBuffer = new Uint8Array(
+            chunks.reduce((acc, chunk) => [...acc, ...chunk], [])
+          );
+
+          // Create a Blob and handle the file
+          const blob = new Blob([fileBuffer]);
+          const newFile = new File([blob], `${cid}.encrypted`, {
+            type: "application/octet-stream",
+          });
+
+          // Set the file in the input
+          const dataTransfer = new DataTransfer();
+          dataTransfer.items.add(newFile);
+          document.getElementById("fileInput").files = dataTransfer.files;
+
+          document.getElementById("searchResult").innerHTML =
+            "File fetched successfully! Ready for decryption.";
+        } catch (error) {
+          console.error("Error fetching file from IPFS:", error);
+          document.getElementById(
+            "searchResult"
+          ).innerHTML = `Error fetching file: ${error.message}`;
+        }
+      }
+
+      function handleFileUpload(file) {
+        const dropArea = document.getElementById("dropArea");
+        dropArea.innerText = `File selected: ${file.name}`;
+      }
+
+      async function decryptFile(file) {
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+          try {
+            const byteArray = new Uint8Array(event.target.result);
+            const encryptionKeyInput = document
+              .getElementById("encryptionKey")
+              .value.trim();
+
+            if (!encryptionKeyInput) {
+              throw new Error("Please enter an encryption key.");
+            }
+
+            // Parse the metadata length
+            const metadataLength = byteArray[0];
+            if (metadataLength === 0 || metadataLength >= byteArray.length) {
+              throw new Error("Invalid metadata length.");
+            }
+
+            // Extract metadata and encrypted data
+            const metadataBytes = byteArray.slice(1, metadataLength + 1);
+            const metadata = JSON.parse(
+              new TextDecoder().decode(metadataBytes)
+            );
+            const encryptedData = byteArray.slice(metadataLength + 1);
+
+            if (encryptedData.length === 0) {
+              throw new Error("No encrypted data found.");
+            }
+
+            // Decode the encryption key
+            const key = new Uint8Array(
+              atob(encryptionKeyInput)
+                .split("")
+                .map((char) => char.charCodeAt(0))
+            );
+
+            // Decrypt the data
+            const decryptedData = xorDecrypt(encryptedData, key);
+
+            // Validate the decrypted data
+            if (!isPdfFile(decryptedData)) {
+              throw new Error("Decryption failed: Invalid PDF format");
+            }
+
+            // Create and download the decrypted file
+            const fileType = metadata.type || "application/pdf";
+            const decryptedBlob = new Blob([decryptedData], { type: fileType });
+            triggerDownload(decryptedBlob, `decrypted_${file.name}`);
+          } catch (error) {
+            console.error("Decryption error:", error);
+            alert(`Decryption failed: ${error.message}`);
+          }
+        };
+
+        reader.readAsArrayBuffer(file);
+      }
+
+      async function fetchAndDecryptCertificate(
+        ipfsCID,
+        encryptionKey,
+        certificateID
+      ) {
+        try {
+          const chunks = [];
+          for await (const chunk of ipfs.cat(ipfsCID)) {
+            chunks.push(chunk);
+          }
+
+          const byteArray = new Uint8Array(
+            chunks.reduce((acc, chunk) => [...acc, ...chunk], [])
+          );
+
+          if (byteArray.length === 0) {
+            throw new Error("No data fetched from IPFS.");
+          }
+
+          const metadataLength = byteArray[0];
+
+          if (metadataLength === 0 || metadataLength >= byteArray.length) {
+            throw new Error("Invalid metadata length.");
+          }
+
+          const metadataBytes = byteArray.slice(1, metadataLength + 1);
+          const metadata = JSON.parse(new TextDecoder().decode(metadataBytes));
+          const encryptedData = byteArray.slice(metadataLength + 1);
+
+          if (encryptedData.length === 0) {
+            throw new Error("No encrypted data found.");
+          }
+
+          const key = new Uint8Array(
+            atob(encryptionKey)
+              .split("")
+              .map((char) => char.charCodeAt(0))
+          );
+
+          const decryptedData = xorDecrypt(encryptedData, key);
+
+          if (!isPdfFile(decryptedData)) {
+            throw new Error("Decryption failed: Invalid PDF format");
+          }
+
+          const decryptedBlob = new Blob([decryptedData], {
+            type: metadata.type || "application/pdf",
+          });
+
+          triggerDownload(decryptedBlob, `${certificateID}.pdf`);
+        } catch (error) {
+          console.error("Error during decryption:", error);
+          alert(`Decryption failed: ${error.message}`);
+        }
+      }
+
+      function xorDecrypt(data, key) {
+        const result = new Uint8Array(data.length);
+        for (let i = 0; i < data.length; i++) {
+          result[i] = data[i] ^ key[i % key.length];
+        }
+        return result;
+      }
+
+      function isPdfFile(data) {
+        const pdfHeader = [0x25, 0x50, 0x44, 0x46]; // "%PDF"
+        return pdfHeader.every((byte, index) => data[index] === byte);
+      }
+
+      function triggerDownload(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      async function query(sql, params = []) {
+        const connection = await mysql.createConnection(dbConfig);
+        try {
+          const [results] = await connection.execute(sql, params);
+          return results;
+        } finally {
+          await connection.end();
+        }
+      }
+
+      async function fetchAndSaveCertificate(ipfsCID, certificateID) {
+        try {
+          const response = await fetch("/applicant/save-certificate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ipfsCID,
+              certificateID,
+            }),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || "Failed to save certificate");
+          }
+
+          const result = await response.json();
+          console.log("Certificate saved successfully:", result);
+        } catch (error) {
+          console.error("Error saving certificate:", error);
+          alert(`Error saving certificate: ${error.message}`);
+        }
+      }
+
+      // Remove any router-related code
+      document.addEventListener("DOMContentLoaded", () => {
+        // Add event listeners to download buttons
+        document.querySelectorAll(".download-btn").forEach((button) => {
+          button.addEventListener("click", async (event) => {
+            const ipfsCID = event.target.getAttribute("data-ipfs-cid");
+            const certificateID = event.target.getAttribute(
+              "data-certificate-id"
+            );
+            const encryptionKey = event.target.getAttribute(
+              "data-encryption-key"
+            );
+
+            try {
+              // First, fetch and decrypt the certificate
+              await fetchAndDecryptCertificate(
+                ipfsCID,
+                encryptionKey,
+                certificateID
+              );
+
+              // Then save the certificate
+              await fetchAndSaveCertificate(ipfsCID, certificateID);
+            } catch (error) {
+              console.error("Error processing certificate:", error);
+              alert(`Error processing certificate: ${error.message}`);
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Requests - Institute</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <%- include('../partials/header') %>
+    <main class="container">
+      <h1>View Requests</h1>
+      <% if (typeof error !== 'undefined') { %>
+      <div class="error"><%= error %></div>
+      <% } %> <% if (typeof success !== 'undefined') { %>
+      <div class="success">Certificate verified and uploaded successfully!</div>
+      <% } %>
+      <table>
+        <thead>
+          <tr>
+            <th>Certificate ID</th>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Certificate Name</th>
+            <th>Institute</th>
+            <th>Certificate Type</th>
+            <th>Filename</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% requests.forEach(request => { %>
+          <tr>
+            <td><%= request['Certificate ID'] %></td>
+            <td><%= request.Username %></td>
+            <td><%= request['Full Name'] %></td>
+            <td><%= request['Certificate Name'] %></td>
+            <td><%= request.Institute %></td>
+            <td><%= request['Certificate Type'] %></td>
+            <td><%= request.Filename %></td>
+            <td>
+              <a
+                href="/institute/verify-certificate?certificateID=<%= request['Certificate ID'] %>"
+                >Verify Certificate</a
+              >
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </main>
+    <%- include('../partials/footer') %>
+  </body>
+</html>

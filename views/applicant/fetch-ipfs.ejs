@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fetch and Decrypt File from IPFS</title>
+    <link rel="stylesheet" href="/css/applicantdashboard.css" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap"
+      nonce="<%= nonce %>"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      nonce="<%= nonce %>"
+    />
+    <script
+      src="https://unpkg.com/ipfs-http-client/dist/index.min.js"
+      nonce="<%= nonce %>"
+    ></script>
+    <style nonce="<%= nonce %>">
+      body {
+        font-family: "Montserrat", sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      label {
+        font-weight: 400;
+      }
+      button {
+        font-weight: 600;
+        padding: 10px;
+        cursor: pointer;
+      }
+      #fetchedFileLink,
+      #decryptedFileLink {
+        display: none;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fetch and Decrypt File from IPFS</h1>
+    <form id="fetchForm">
+      <label for="contentId">Content Identifier:</label>
+      <input type="text" id="contentId" required />
+      <button type="submit">Fetch File</button>
+    </form>
+    <a id="fetchedFileLink">Download Fetched File</a>
+
+    <form id="decryptForm" style="display: none">
+      <h2>Decrypt File</h2>
+      <label for="decryptionKey">Decryption Key:</label>
+      <input type="password" id="decryptionKey" required />
+      <button type="submit">Decrypt File</button>
+    </form>
+    <a id="decryptedFileLink">Download Decrypted File</a>
+
+    <script nonce="<%= nonce %>">
+      async function fetchFileFromIPFS(cid) {
+        try {
+          const ipfs = window.IpfsHttpClient.create({
+            host: "localhost",
+            port: "5001",
+            protocol: "http",
+          });
+          const chunks = [];
+          for await (const chunk of ipfs.cat(cid)) {
+            chunks.push(chunk);
+          }
+          // Assuming the fetched data is a PDF, set the correct MIME type
+          return new Blob(chunks, { type: "application/png" });
+        } catch (error) {
+          console.error("Error fetching from IPFS:", error);
+          throw error;
+        }
+      }
+
+      async function deriveKey(password, salt) {
+        const encoder = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey(
+          "raw",
+          encoder.encode(password),
+          "PBKDF2",
+          false,
+          ["deriveKey"]
+        );
+        return crypto.subtle.deriveKey(
+          {
+            name: "PBKDF2",
+            salt: salt,
+            iterations: 100000,
+            hash: "SHA-256",
+          },
+          keyMaterial,
+          { name: "AES-GCM", length: 256 },
+          true,
+          ["encrypt", "decrypt"]
+        );
+      }
+
+      async function decryptFile(encryptedBlob, password) {
+        const arrayBuffer = await encryptedBlob.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+
+        // Extract salt, iv, encrypted content, and HMAC
+        const salt = data.slice(0, 16);
+        const iv = data.slice(16, 28);
+        const encryptedContent = data.slice(28, data.length - 32);
+        const hmac = data.slice(data.length - 32);
+
+        const key = await deriveKey(password, salt);
+
+        try {
+          const decryptedContent = await crypto.subtle.decrypt(
+            {
+              name: "AES-GCM",
+              iv: iv,
+            },
+            key,
+            encryptedContent
+          );
+          return new Blob([new Uint8Array(decryptedContent)], {
+            type: encryptedBlob.type,
+          });
+        } catch (error) {
+          console.error("Error decrypting file:", error);
+          throw error;
+        }
+      }
+
+      document
+        .getElementById("fetchForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+          const cid = document.getElementById("contentId").value;
+          try {
+            const fetchedBlob = await fetchFileFromIPFS(cid);
+            const url = URL.createObjectURL(fetchedBlob);
+            const fetchedFileLink = document.getElementById("fetchedFileLink");
+            fetchedFileLink.href = url;
+            fetchedFileLink.download = "fetched_file";
+            fetchedFileLink.style.display = "block";
+            fetchedFileLink.textContent = "Download Fetched File";
+
+            // Show decryption form
+            const decryptForm = document.getElementById("decryptForm");
+            decryptForm.style.display = "block";
+
+            // Handle decryption form submission
+            decryptForm.addEventListener("submit", async (event) => {
+              event.preventDefault();
+              const decryptionKey =
+                document.getElementById("decryptionKey").value;
+              try {
+                const decryptedBlob = await decryptFile(
+                  fetchedBlob,
+                  decryptionKey
+                );
+                const decryptedUrl = URL.createObjectURL(decryptedBlob);
+                const decryptedFileLink =
+                  document.getElementById("decryptedFileLink");
+                decryptedFileLink.href = decryptedUrl;
+                decryptedFileLink.download = "decrypted_file";
+                decryptedFileLink.style.display = "block";
+                decryptedFileLink.textContent = "Download Decrypted File";
+              } catch (error) {
+                console.error("Error during decryption:", error);
+              }
+            });
+          } catch (error) {
+            console.error("Error during fetch:", error);
+          }
+        });
+    </script>
+  </body>
+</html>

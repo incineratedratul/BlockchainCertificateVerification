@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notifications</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Notifications</h1>
+      <ul>
+        <% notifications.forEach(notification => { %>
+        <li>
+          <article>
+            <header>
+              <h3>
+                Certificate <%= notification.certificate_id %> has been verified
+                by <%= notification.institute %> (Verifier: <%=
+                notification.verifier %>)
+              </h3>
+              <% if (notification.time_verified) { %>
+              <time
+                class="notification-time"
+                datetime="<%= new Date(notification.time_verified).toISOString() %>"
+              >
+                <%= new Date(notification.time_verified).toLocaleString() %>
+              </time>
+              <% } %>
+            </header>
+            <form action="/applicant/insert-to-blockchain" method="get">
+              <input
+                type="hidden"
+                name="certificateID"
+                value="<%= notification.certificate_id %>"
+              />
+              <button type="submit" class="button">Insert to Blockchain</button>
+            </form>
+          </article>
+        </li>
+        <% }) %>
+      </ul>
+    </main>
+  </body>
+</html>

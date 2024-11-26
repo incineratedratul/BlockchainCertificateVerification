@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Verifi-chain</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <main class="container">
+        <section>
+            <h2>Admin Dashboard</h2>
+            <ul>
+                <li><a href="/admin/view-certificates">View Certificates</a></li>
+                <li><a href="/admin/view-requests">View Requests</a></li>
+                <li><a href="/admin/verify-requests">Verify Requests</a></li>
+                <li><a href="/admin/input-blockchain">Input to Blockchain</a></li>
+                <li><a href="/admin/input-ipfs">Input to IPFS</a></li>
+                <li><a href="/admin/notifications">Notifications</a></li>
+            </ul>
+        </section>
+    </main>
+    <%- include('../partials/footer') %>
+</body>
+</html>

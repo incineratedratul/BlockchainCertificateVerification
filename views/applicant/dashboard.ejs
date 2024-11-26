@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Applicant Dashboard</title>
+    <link rel="stylesheet" href="/css/applicantdashboard.css" />
+  </head>
+  <body>
+    <div class="dashboard-container">
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <img src="/images/logo.png" alt="Logo" class="logo" />
+          <h2>Dashboard</h2>
+        </div>
+        <ul class="nav-links">
+          <li>
+            <a href="/applicant/dashboard"
+              ><i class="fas fa-tachometer-alt"></i> Dashboard</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/my-certificates"
+              ><i class="fas fa-file-alt"></i> My Certificates</a
+            >
+          </li>
+
+          <li>
+            <a href="/applicant/view-verified-certificates"
+              ><i class="fas fa-file-alt"></i> Verified Certificates</a
+            >
+          </li>
+
+          <li>
+            <a href="/applicant/request-notifications"
+              ><i class="fas fa-file-alt"></i> Request Notifications</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/upload-certificates"
+              ><i class="fas fa-upload"></i> Upload Certificates</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/my-profile"
+              ><i class="fas fa-user"></i> My Profile</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/my-profile"
+              ><i class="fas fa-user"></i> My Profile</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/notifications"
+              ><i class="fas fa-bell"></i> Notifications</a
+            >
+          </li>
+          <li>
+            <a href="/applicant/fetch-and-confirm"
+              ><i class="fas fa-check"></i> Confirm Certificates</a
+            >
+          </li>
+        </ul>
+      </div>
+      <div class="main-content">
+        <div class="top-bar">
+          <div class="search-bar">
+            <input type="text" placeholder="Search..." />
+            <i class="fas fa-search"></i>
+          </div>
+          <div class="user-info">
+            <img
+              src="/images/user-avatar.png"
+              alt="User Avatar"
+              class="avatar"
+            />
+            <h4><%= user.username %></h4>
+          </div>
+        </div>
+        <div class="quick-stats">
+          <div class="stat-card">
+            <i class="fas fa-certificate"></i>
+            <div class="stat-info">
+              <h3>15</h3>
+              <p>Certificates</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fas fa-bell"></i>
+            <div class="stat-info">
+              <h3>5</h3>
+              <p>Notifications</p>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-panels">
+          <div class="panel">
+            <h2>Upcoming Deadlines</h2>
+            <ul>
+              <li>
+                <i class="fas fa-calendar-alt"></i>
+                <div class="deadline-info">
+                  <p>Project Submission</p>
+                  <span class="deadline-date">Aug 15, 2024</span>
+                </div>
+              </li>
+              <li>
+                <i class="fas fa-calendar-alt"></i>
+                <div class="deadline-info">
+                  <p>Final Exam</p>
+                  <span class="deadline-date">Sep 1, 2024</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <div class="panel">
+            <h2>Recent Submissions</h2>
+            <ul>
+              <li>
+                <i class="fas fa-file-alt"></i>
+                <div>
+                  <p>Thesis Document</p>
+                  <span>Submitted on Jul 30, 2024</span>
+                </div>
+              </li>
+              <li>
+                <i class="fas fa-file-alt"></i>
+                <div>
+                  <p>Research Paper</p>
+                  <span>Submitted on Jul 25, 2024</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

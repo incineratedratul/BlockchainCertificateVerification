@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload Certificates - Verifi-chain</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/css/certificateupload.css" />
+  </head>
+  <body>
+    <%- include('../partials/header') %>
+    <div class="dashboard-container">
+      <aside class="sidebar">
+        <nav>
+          <ul>
+            <li>
+              <a href="/dashboard"><i class="fas fa-home"></i> Dashboard</a>
+            </li>
+            <li>
+              <a href="/certificates"
+                ><i class="fas fa-certificate"></i> My Certificates</a
+              >
+            </li>
+            <li class="active">
+              <a href="/upload"
+                ><i class="fas fa-upload"></i> Upload Certificate</a
+              >
+            </li>
+            <li>
+              <a href="/profile"><i class="fas fa-user"></i> Profile</a>
+            </li>
+            <li>
+              <a href="/settings"><i class="fas fa-cog"></i> Settings</a>
+            </li>
+          </ul>
+        </nav>
+      </aside>
+      <main class="main-content">
+        <header class="page-header">
+          <h1>Upload Certificate</h1>
+        </header>
+        <% if (typeof error !== 'undefined') { %>
+        <div class="alert alert-error">
+          <i class="fas fa-exclamation-circle"></i>
+          <%= error %>
+        </div>
+        <% } %>
+        <div class="form-container">
+          <form
+            action="/applicant/upload-certificates"
+            method="post"
+            enctype="multipart/form-data"
+          >
+            <div class="form-group">
+              <label for="fullName">Full Name</label>
+              <input type="text" id="fullName" name="fullName" required />
+            </div>
+            <div class="form-group">
+              <label for="certificateName">Certificate Name</label>
+              <input
+                type="text"
+                id="certificateName"
+                name="certificateName"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="institute">Institute</label>
+              <input type="text" id="institute" name="institute" required />
+            </div>
+            <div class="form-group">
+              <label for="certificateType">Certificate Type</label>
+              <input
+                type="text"
+                id="certificateType"
+                name="certificateType"
+                required
+              />
+            </div>
+            <div class="form-group file-input">
+              <label for="certificate">Certificate File</label>
+              <input type="file" id="certificate" name="certificate" required />
+              <div class="file-input-label">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Choose a file or drag it here</span>
+              </div>
+            </div>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-upload"></i> Upload Certificate
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+    <%- include('../partials/footer') %>
+    <script>
+      // Add custom file input behavior
+      const fileInput = document.getElementById("certificate");
+      const fileInputLabel = document.querySelector(".file-input-label span");
+
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          fileInputLabel.textContent = e.target.files[0].name;
+        } else {
+          fileInputLabel.textContent = "Choose a file or drag it here";
+        }
+      });
+    </script>
+  </body>
+</html>

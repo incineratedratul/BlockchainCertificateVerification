@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Certificate</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+  </head>
+  <body>
+    <main class="container">
+      <h1>View Certificate</h1>
+      <p><strong>Username:</strong> <%= certificate.username %></p>
+      <p><strong>Full Name:</strong> <%= certificate.full_name %></p>
+      <p>
+        <strong>Certificate Name:</strong> <%= certificate.certificate_name %>
+      </p>
+      <p><strong>Institute:</strong> <%= certificate.institute %></p>
+      <p>
+        <strong>Certificate Type:</strong> <%= certificate.certificate_type %>
+      </p>
+      <p><strong>Verifier:</strong> <%= certificate.verifier %></p>
+      <p>
+        <strong>Verifier Contact:</strong> <%= certificate.verifier_contact %>
+      </p>
+      <p><strong>Time Verified:</strong> <%= certificate.time_verified %></p>
+      <p><strong>IPFS CID:</strong> <%= certificate.ipfs_cid %></p>
+      <p><strong>Encryption Key:</strong> <%= certificate.encryption_key %></p>
+      <a href="<%= certificate.ipfs_cid %>" download
+        >Download Encrypted Certificate</a
+      >
+    </main>
+  </body>
+</html>

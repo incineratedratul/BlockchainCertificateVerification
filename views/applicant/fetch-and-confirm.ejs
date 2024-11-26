@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fetch and Confirm Certificates</title>
+    <link rel="stylesheet" href="/css/fetch.css" />
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Fetch and Confirm Certificates</h1>
+      <button id="fetchDataButton">Fetch Data from Database</button>
+      <div id="dataContainer" style="display: none">
+        <table id="certificatesTable">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Time Verified</th>
+              <th>Certificate Name</th>
+              <th>Full Name</th>
+              <th>Institute</th>
+              <th>Certificate Type</th>
+              <th>Certificate ID</th>
+              <th>Filename</th>
+              <th>Verifier</th>
+              <th>Verifier Contact</th>
+              <th>IPFS CID</th>
+              <th>Block Creation Time</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows will be populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script nonce="<%= nonce %>">
+      // Initialize Web3 once at the top
+      const web3 = new Web3(window.ethereum);
+
+      document
+        .getElementById("fetchDataButton")
+        .addEventListener("click", async () => {
+          try {
+            const response = await fetch("/applicant/fetch-certificates");
+            if (!response.ok) {
+              throw new Error(
+                "Network response was not ok " + response.statusText
+              );
+            }
+            const data = await response.json();
+
+            // Log data fetched from backend to inspect
+            console.log("Data fetched from backend:", data);
+
+            const tableBody = document
+              .getElementById("certificatesTable")
+              .querySelector("tbody");
+
+            data.certificates.forEach((certificate) => {
+              const row = document.createElement("tr");
+              [
+                "username",
+                "time_verified",
+                "certificate_name",
+                "full_name",
+                "institute",
+                "certificate_type",
+                "certificate_id",
+                "filename",
+                "verifier",
+                "verifier_contact",
+                "ipfs_cid",
+              ].forEach((key) => {
+                const cell = document.createElement("td");
+                cell.textContent = certificate[key];
+                row.appendChild(cell);
+              });
+
+              // Add an empty cell for Block Creation Time
+              const blockTimeCell = document.createElement("td");
+              blockTimeCell.classList.add("block-time");
+              row.appendChild(blockTimeCell);
+
+              // Add a Confirm button cell
+              const actionCell = document.createElement("td");
+              const confirmButton = document.createElement("button");
+              confirmButton.textContent = "Confirm";
+              confirmButton.addEventListener("click", async () => {
+                await inputToBlockchain(certificate, blockTimeCell);
+              });
+              actionCell.appendChild(confirmButton);
+              row.appendChild(actionCell);
+
+              tableBody.appendChild(row);
+            });
+
+            document.getElementById("dataContainer").style.display = "block";
+          } catch (error) {
+            console.error("Error fetching data:", error);
+            alert("Error fetching certificate data.");
+          }
+        });
+
+      async function inputToBlockchain(certificate, blockTimeCell) {
+        if (typeof window.ethereum !== "undefined") {
+          try {
+            const startTime = Date.now();
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+
+            const contractAddress =
+              "0x81025A91D759d19507158fa1bAa4a9552d413584";
+            const abi = [
+              {
+                inputs: [
+                  {
+                    internalType: "string",
+                    name: "_username",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_issueDate",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_certificateName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_fullName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_institute",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_certificateType",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_certificateID",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_filename",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_verifier",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_verifierContact",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "_ipfsCID",
+                    type: "string",
+                  },
+                ],
+                name: "addCertificate",
+                outputs: [],
+                stateMutability: "nonpayable",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "string",
+                    name: "",
+                    type: "string",
+                  },
+                ],
+                name: "cidToCertificate",
+                outputs: [
+                  {
+                    internalType: "string",
+                    name: "username",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "issueDate",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "fullName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "institute",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateType",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateID",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "filename",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifier",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifierContact",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "ipfsCID",
+                    type: "string",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "string",
+                    name: "_ipfsCID",
+                    type: "string",
+                  },
+                ],
+                name: "getCertificateByCID",
+                outputs: [
+                  {
+                    internalType: "string",
+                    name: "username",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "issueDate",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "fullName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "institute",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateType",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateID",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "filename",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifier",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifierContact",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "ipfsCID",
+                    type: "string",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "string",
+                    name: "_username",
+                    type: "string",
+                  },
+                ],
+                name: "getCertificatesByUsername",
+                outputs: [
+                  {
+                    components: [
+                      {
+                        internalType: "string",
+                        name: "username",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "issueDate",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "certificateName",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "fullName",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "institute",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "certificateType",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "certificateID",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "filename",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "verifier",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "verifierContact",
+                        type: "string",
+                      },
+                      {
+                        internalType: "string",
+                        name: "ipfsCID",
+                        type: "string",
+                      },
+                    ],
+                    internalType: "struct CertificateManager.Certificate[]",
+                    name: "",
+                    type: "tuple[]",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+              {
+                inputs: [
+                  {
+                    internalType: "string",
+                    name: "",
+                    type: "string",
+                  },
+                  {
+                    internalType: "uint256",
+                    name: "",
+                    type: "uint256",
+                  },
+                ],
+                name: "usernameToCertificates",
+                outputs: [
+                  {
+                    internalType: "string",
+                    name: "username",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "issueDate",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "fullName",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "institute",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateType",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "certificateID",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "filename",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifier",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "verifierContact",
+                    type: "string",
+                  },
+                  {
+                    internalType: "string",
+                    name: "ipfsCID",
+                    type: "string",
+                  },
+                ],
+                stateMutability: "view",
+                type: "function",
+              },
+            ];
+            const contract = new web3.eth.Contract(abi, contractAddress);
+            const accounts = await web3.eth.getAccounts();
+            const userAddress = accounts[0];
+
+            // Log the data being sent to the blockchain
+            console.log("Sending data to blockchain:", {
+              username: certificate.username,
+              issueDate: certificate.time_verified,
+              certificateName: certificate.certificate_name,
+              fullName: certificate.full_name,
+              institute: certificate.institute,
+              certificateType: certificate.certificate_type,
+              certificateID: certificate.certificate_id,
+              filename: certificate.filename,
+              verifier: certificate.verifier,
+              verifierContact: certificate.verifier_contact,
+              ipfsCID: certificate.ipfs_cid,
+            });
+
+            const result = await contract.methods
+              .addCertificate(
+                certificate.username,
+                certificate.time_verified,
+                certificate.certificate_name,
+                certificate.full_name,
+                certificate.institute,
+                certificate.certificate_type,
+                certificate.certificate_id,
+                certificate.filename,
+                certificate.verifier,
+                certificate.verifier_contact,
+                certificate.ipfs_cid
+              )
+              .send({ from: userAddress });
+
+            console.log("Transaction hash:", result.transactionHash);
+
+            const receipt = await web3.eth.getTransactionReceipt(
+              result.transactionHash
+            );
+            if (receipt && receipt.status) {
+              const blockCreationTime = (Date.now() - startTime) / 1000; // Convert to seconds
+              blockTimeCell.textContent = `${blockCreationTime.toFixed(
+                2
+              )} seconds (Block #${receipt.blockNumber})`;
+            } else {
+              console.error("Transaction failed.");
+              alert("Transaction failed. Please try again.");
+            }
+          } catch (error) {
+            console.error("Error while interacting with the contract:", error);
+            alert("Error interacting with the blockchain contract.");
+          }
+        } else {
+          alert("Ethereum wallet not detected. Please install MetaMask.");
+        }
+      }
+    </script>
+  </body>
+</html>
